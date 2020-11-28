@@ -3,6 +3,20 @@ Code that extracts The300 y-profiles.
 Written to run on midway2.
 '''
 
+#Import all packages as needed
+
+import astropy.io.fits as pf
+from astropy import units as u
+from astropy.table import Table
+from astropy.coordinates import SkyCoord
+from astropy.cosmology import Planck15 as cosmo
+
+import matplotlib.pyplot as plt
+import healpy as hp, pandas as pd, numpy as np
+import colossus
+from scipy import signal, interpolate, stats
+from tqdm import tqdm
+
 #Necessary cosmological params
 h = 0.6777
 
