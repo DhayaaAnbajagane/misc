@@ -61,9 +61,11 @@ def logder_linear(x, data, N=100, xrange = None, window_length=5, polyorder=3):
     return 10**((lnrad_fine[1:]+lnrad_fine[:-1])/2), dlnsig_dlnr_fine
 
 '''
-STEP 1: Normally we'd need to compute the profiles here.
-        But I already saved precomputed profiles so we don't
-        have to redo them all over again
+NOTE: Normally we'd need to compute the profiles here.
+      But I already saved the computed profiles so we don't
+      have to redo them all over again. Saved profiles include
+      100 realizations for each cluster with 100 M500c values
+      drawn from gaussian distribution in linear M500c
 '''
 
 #Define which datasets we want to look into
@@ -82,30 +84,34 @@ bins_plot = h5py.File('/project2/chihway/dhayaa/Cluster_Profiles.hdf5', 'r')['bi
 for Dataset in keys:
 
     # Load the data from HDF5 file. This array has three axes.
-    # Axes 1 -> Indexes into individual cluster data
-    # Axes 2 -> Profile of a single cluster but with 100 values for M500c
-    #           Marginalizing over axis 2 marginalizes over the mass variance
-    # Axes 3 -> The radial bins (R/R500c) that the profile is computed in
+    # Axis 0 -> Indexes into the individual cluster data, so have length Ncluster
+    #           and this value varies per dataset.
+    # Axis 1 -> Profile of a single cluster but with 100 values for M500c
+    #           Marginalizing over axis 1 marginalizes over the mass variance.
+    #           This always has length nBootstrap = 100
+    # Axis 2 -> The radial bins (R/R500c) that the profile is computed in.
+    #           This always has length nbins = 59
 
     Data = h5py.File('/project2/chihway/dhayaa/Cluster_Profiles.hdf5', 'r')['%s_Profiles'%Dataset]
 
-    # Create masked_array object which handles the NaN values in the array.
-    # This is similar to using np.nansum/nanpercentile etc. but a masked_array
-    # object is way more versatile (eg. there's no np.nanaverage() function but
-    # with the masked array class we can use np.ma.average())
+    # Create masked_array numpy object which handles the NaN values in the array.
+    # This is similar to using np.nansum/nanpercentile etc. on a regular arrays
+    # but a masked_array object is way more versatile eg. there's no np.nanaverage()
+    # function but with the masked array class we can use np.ma.average()
     Data = np.ma.masked_array(Data, np.isnan(Data))
 
     # Compute the mean profile and variance in the profile for a single cluster
     # using the 100 realizations with different M500c values
     # NOTE: Both the linear mean and variance of a log-normally distributed variable
-    #       don't estimate the true mean and variance.
+    #       don't estimate the true mean and variance. So even the mean might have issues?
     mean_profile = np.ma.mean(Data, axis = 1)
     var_profile  = np.ma.var(Data, axis = 1)
 
-    # Setup index into each cluster. We will use this for leave-one-out stacking
+    # Create an index of [1, 2, ...., Ncluster].
+    # We will use this for leave-one-out stacking
     cluster_indices = np.arange(Data.shape[0], dtype = int)
 
-    # Setup dictionary entry with the output array
+    # Initialize the output array in our dictionary
     stacked_profile[Dataset] = np.empty([Data.shape[0], bins_plot.size])
 
     #Loop over each individual cluster in a dataset
@@ -114,7 +120,8 @@ for Dataset in keys:
         stacked_profile[Dataset][i, :] = np.ma.average(mean_profile[np.delete(cluster_indices, i), :],
                                                        axis = 0)
 
-        #if you wanted to weight it, you'd use the following
+        # If you wanted to weight the stacking, you'd use the following
+
         # stacked_counts[Dataset][i, :] = np.ma.average(mean_profile[np.delete(cluster_indices, i), :],
         #                                               weights = var_profile[np.delete(cluster_indices, i), :]),
         #                                               axis = 0)
@@ -182,9 +189,9 @@ for Dataset, color in zip(keys, ['C0', 'C1', 'C2']):
                                                   window_length = window_l,
                                                   xrange = (0.4, Max_R[Dataset]), N = size + 1)
 
-    # We then perform additional "smoothing" onto the log derivative.
-    # To remove any sharp features due to noise.
-    # Loop is just to apply the filter N number of times
+    # We then perform additional "smoothing" onto the log derivative
+    # to remove any sharp features due to noise.
+    # The for loop is just to apply the filter N = 5 number of times
     # Our main result is not affected by using different values of N
     for i in range(5):
 
