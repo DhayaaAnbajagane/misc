@@ -104,6 +104,7 @@ for Dataset in keys:
     # using the 100 realizations with different M500c values
     # NOTE: Both the linear mean and variance of a log-normally distributed variable
     #       don't estimate the true mean and variance. So even the mean might have issues?
+    #       But maybe this is just the mean vs. median debate again, so using mean should be ok
     mean_profile = np.ma.mean(Data, axis = 1)
     var_profile  = np.ma.var(Data, axis = 1)
 
