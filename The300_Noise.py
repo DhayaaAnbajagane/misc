@@ -178,7 +178,7 @@ for i in tqdm(range(1, n_clusters + 1)):
         CMB_y   = treecorr.Catalog(ra = RA, dec = DEC, k = Contaminated_SZ, ra_units = 'deg', dec_units = 'deg')
 
         # Now get relevant halo params from file
-        Relaxation_Params = pd.read_csv('The300_relaxation_params/GadgetX_ALL_NewMDCLUSTER_' + name + '.dat',
+        Relaxation_Params = pd.read_csv('/project2/chihway/dhayaa/The300_maps/The300_relaxation_params/GadgetX_ALL_NewMDCLUSTER_' + name + '.dat',
                                             delimiter = ' ', skiprows = 0, skipinitialspace = True)
 
         Relaxation_Params = Relaxation_Params[Relaxation_Params.snapnum.values == snap]
